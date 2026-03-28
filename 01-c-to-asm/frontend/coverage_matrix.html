@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C言語テンプレート カバレッジマトリクス</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f8f7f4;
+    color: #1a1a18;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 24px 16px;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    color: #1a1a18;
+  }
+
+  /* サマリーカード */
+  .summary-grid {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .summary-card {
+    flex: 1 1 110px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #d3d1c7;
+    background: #fff;
+  }
+  .summary-card.warn {
+    border-color: #f5c4b380;
+    background: #faece750;
+  }
+  .summary-card .label {
+    font-size: 11px;
+    color: #888780;
+    margin-bottom: 3px;
+  }
+  .summary-card .value {
+    font-size: 22px;
+    font-weight: 500;
+    color: #1a1a18;
+  }
+  .summary-card.warn .value { color: #712b13; }
+
+  /* カテゴリバー */
+  .cat-bars { margin-bottom: 20px; }
+  .cat-bars .section-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f5e5a;
+    margin-bottom: 8px;
+  }
+  .cat-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 5px;
+  }
+  .cat-bar-row .cat-name {
+    width: 96px;
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .cat-bar-track {
+    flex: 1;
+    height: 13px;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .cat-bar-fill { height: 100%; border-radius: 3px; }
+  .cat-bar-row .cat-stat {
+    font-size: 11px;
+    color: #888780;
+    width: 140px;
+    flex-shrink: 0;
+  }
+
+  /* フィルター */
+  .filter-bar {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-bar button {
+    font-size: 12px;
+    padding: 4px 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity .15s;
+    font-family: inherit;
+  }
+  .filter-bar button:hover { opacity: .85; }
+  .filter-bar input[type="text"] {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #b4b2a9;
+    background: #fff;
+    color: #1a1a18;
+    outline: none;
+    width: 190px;
+    margin-left: auto;
+    font-family: inherit;
+  }
+  .count-label {
+    font-size: 11px;
+    color: #888780;
+    margin-bottom: 10px;
+  }
+
+  /* マトリクスカード */
+  .matrix-card {
+    margin-bottom: 16px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .matrix-header {
+    padding: 9px 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .matrix-header .tid {
+    font-weight: 500;
+    font-size: 12px;
+  }
+  .matrix-header .sub {
+    font-size: 11px;
+    opacity: .65;
+    margin-left: 7px;
+  }
+  .matrix-header .right {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .matrix-header .combo-count { font-size: 11px; }
+  .progress-track {
+    width: 70px;
+    height: 5px;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .pct-label { font-size: 11px; font-weight: 500; }
+
+  /* 固定軸セレクタ */
+  .fix-bar {
+    padding: 5px 12px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .fix-bar .fix-label { font-size: 11px; opacity: .7; }
+  .fix-btn {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: opacity .15s;
+  }
+  .fix-btn:hover { opacity: .85; }
+
+  /* テーブル */
+  .matrix-table-wrap { padding: 10px 12px; overflow-x: auto; }
+  .matrix-table {
+    border-collapse: collapse;
+    font-size: 11px;
+    width: 100%;
+  }
+  .matrix-table th {
+    padding: 4px 8px;
+    font-weight: 500;
+    color: #5f5e5a;
+    white-space: nowrap;
+  }
+  .matrix-table th.row-axis {
+    text-align: left;
+    padding: 4px 10px;
+  }
+  .matrix-table td {
+    padding: 5px 8px;
+    text-align: center;
+  }
+  .matrix-table td.row-label {
+    padding: 5px 10px;
+    font-weight: 500;
+    color: #5f5e5a;
+    white-space: nowrap;
+    text-align: left;
+  }
+  .matrix-table tr.odd { background: transparent; }
+
+  .cell-covered, .cell-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .cell-covered { color: #fff; }
+  .cell-empty { background: transparent; }
+
+  /* notes */
+  .matrix-notes {
+    padding: 6px 12px 10px;
+    font-size: 11px;
+    color: #888780;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+
+<h1>C言語テンプレート カバレッジマトリクス</h1>
+<div id="app"></div>
+
+<script>
+const RAW = {"array_ptr_copy_02":{"category":"array_pointer","subcategory":"ptr_array_copy","axes":{"elem_type":["int","double","float","char","unsigned_char"],"copy_style":["index","postinc"]},"covered":{"elem_type":"int","copy_style":"index"},"notes":"postinc スタイルの完全展開は生成スクリプト側で COPY_STYLE 分岐として実装予定","total_combos":10},"array_ptr_dynamic_alloc_03":{"category":"array_pointer","subcategory":"dynamic_alloc","axes":{"elem_type":["int","double","float","char","unsigned_char"],"alloc_func":["malloc","calloc"],"err_action":["return_null","return_minus1","exit","perror_return"]},"covered":{"elem_type":"int","alloc_func":"malloc","err_action":"return_null"},"notes":"calloc 完全展開は生成スクリプト側で ALLOC_FUNC 分岐として実装予定","total_combos":40},"array_ptr_func_ptr_table_04":{"category":"array_pointer","subcategory":"func_ptr_table","axes":{"ret_type":["void","int","double"],"param_style":["no_param","single_int","const_char_ptr"]},"covered":{"ret_type":"void","param_style":"no_param"},"notes":"double 戻り値・int×int 引数は _05 で対応予定","total_combos":9},"array_ptr_linear_search_01":{"category":"array_pointer","subcategory":"linear_search","axes":{"elem_type":["int","double","char","long"],"pointer_style":["array_index","pointer_arithmetic"]},"covered":{"elem_type":"int","pointer_style":"array_index"},"notes":"pointer_arithmetic スタイルは _02 で対応予定","total_combos":8},"array_ptr_reverse_05":{"category":"array_pointer","subcategory":"ptr_reverse","axes":{"elem_type":["int","double","char","float","long"],"swap_style":["tmp_variable","xor_swap"]},"covered":{"elem_type":"int","swap_style":"tmp_variable"},"notes":"xor_swap スタイルは別テンプレートで対応予定","total_combos":10},"loop_do_while_04":{"category":"loop","subcategory":"do_while","axes":{"input_type":["int","char","double","unsigned_int"],"condition_style":["range_check","char_set_check","flag"]},"covered":{"input_type":"int","condition_style":"range_check"},"notes":"double × flag は別テンプレートで対応予定","total_combos":12},"loop_for_basic_01":{"category":"loop","subcategory":"for_ascending","axes":{"counter_type":["int","size_t","unsigned_int","long"],"operator":["<","<="],"step_style":["post_increment","pre_increment","step_add"]},"covered":{"counter_type":"int","operator":"<","step_style":"post_increment"},"notes":"size_t × '<=' × step_add は _03 で対応予定","total_combos":24},"loop_for_basic_02":{"category":"loop","subcategory":"for_descending","axes":{"counter_type":["int","long","ssize_t"],"operator":[">=",">"],"step_style":["post_decrement","pre_decrement","step_sub"]},"covered":{"counter_type":"int","operator":">=","step_style":"post_decrement"},"notes":"long × '>' × step_sub は _05 以降で対応予定","total_combos":18},"loop_for_nested_05":{"category":"loop","subcategory":"for_nested_2d","axes":{"counter_type":["int","size_t","unsigned_int"],"init_style":["zero_fill","sequential","conditional","random"],"dimension_source":["macro_constant","variable","literal"]},"covered":{"counter_type":"int","init_style":"zero_fill","dimension_source":"macro_constant"},"notes":"size_t × sequential は _06 で対応予定","total_combos":36},"loop_infinite_break_06":{"category":"loop","subcategory":"infinite_with_break","axes":{"loop_style":["while_1","for_inf"],"break_condition":["command_eq","eof_check","retry_limit","flag_zero"],"break_position":["head","tail"]},"covered":{"loop_style":"while_1","break_condition":"command_eq","break_position":"head"},"notes":"for(;;) × eof_check × tail は _07 で対応予定","total_combos":16},"loop_while_precond_03":{"category":"loop","subcategory":"while_precondition","axes":{"condition_style":["null_check","comparison","fgets","flag"],"update_style":["pointer_next","increment","stride"]},"covered":{"condition_style":"null_check","update_style":"pointer_next"},"notes":"flag × stride は _04 以降で対応予定","total_combos":12},"rec_binary_search_01":{"category":"recursive_bitops","subcategory":"recursive_binary_search","axes":{"elem_type":["int","double","long"],"recursion_style":["standard","tail_recursive"]},"covered":{"elem_type":"int","recursion_style":"standard"},"notes":"末尾再帰最適化版は _02 で対応予定","total_combos":6},"rec_bit_mask_04":{"category":"recursive_bitops","subcategory":"bitops_mask","axes":{"int_type":["unsigned_int","uint8_t","uint16_t","uint32_t"],"op_style":["all_four","set_clear"],"bit_pos_range":["low_0_7","mid_8_15","high_16_31"]},"covered":{"int_type":"unsigned_int","op_style":"all_four","bit_pos_range":"low_0_7"},"notes":"high_16_31 × set_clear × uint16_t は _05 で対応予定","total_combos":24},"rec_bit_popcount_03":{"category":"recursive_bitops","subcategory":"bitops_popcount","axes":{"int_type":["unsigned_int","uint32_t","uint64_t"],"count_style":["kernighan","recursive","shift_loop"]},"covered":{"int_type":"unsigned_int","count_style":"kernighan"},"notes":"uint64_t × recursive は _04 で対応予定","total_combos":9},"rec_hanoi_05":{"category":"recursive_bitops","subcategory":"recursive_hanoi","axes":{"peg_type":["char","const_char_ptr","int"],"print_fmt":["percent_c","percent_s","percent_d"]},"covered":{"peg_type":"char","print_fmt":"percent_c"},"notes":"int × percent_d は例3でカバー済み","total_combos":9},"rec_merge_sort_02":{"category":"recursive_bitops","subcategory":"recursive_merge_sort","axes":{"elem_type":["int","double","long"],"buf_style":["static_array","dynamic_malloc"]},"covered":{"elem_type":"int","buf_style":"static_array"},"notes":"dynamic_malloc スタイルは _03 で対応予定","total_combos":6},"str_case_convert_05":{"category":"string_ops","subcategory":"case_convert","axes":{"convert_func":["toupper","tolower"],"traverse_style":["pointer_walk","index_loop"]},"covered":{"convert_func":"toupper","traverse_style":"pointer_walk"},"notes":"index_loop スタイルは _06 で対応予定","total_combos":4},"str_memcpy_block_02":{"category":"string_ops","subcategory":"memcpy_block","axes":{"copy_size_style":["sizeof_arr","n_sizeof_type","sizeof_struct","literal"],"null_guard":["yes","no"]},"covered":{"copy_size_style":"sizeof_arr","null_guard":"yes"},"notes":"literal スタイルは _03 で対応予定","total_combos":8},"str_safe_strncpy_01":{"category":"string_ops","subcategory":"safe_strncpy","axes":{"ret_style":["dst_ptr","void"],"null_guard":["yes","no"]},"covered":{"ret_style":"dst_ptr","null_guard":"yes"},"notes":"null_guard なし版は別テンプレートで対応予定","total_combos":4},"str_snprintf_format_03":{"category":"string_ops","subcategory":"snprintf_format","axes":{"fmt_style":["label_int","date","log_level","hex"],"trunc_action":["comment","fprintf_stderr","return_minus1"]},"covered":{"fmt_style":"label_int","trunc_action":"comment"},"notes":"log_level × fprintf_stderr は _04 で対応予定","total_combos":12},"str_strtok_split_04":{"category":"string_ops","subcategory":"strtok_split","axes":{"delim_style":["comma","space_tab","colon","slash"],"process_style":["print","array_store","callback"]},"covered":{"delim_style":"comma","process_style":"print"},"notes":"colon × callback は _05 で対応予定","total_combos":12},"struct_array_traverse_05":{"category":"struct_union","subcategory":"struct_array_traverse","axes":{"key_type":["int","const_char_ptr","unsigned_int"],"val_type":["const_char_ptr","int","double"],"process_style":["printf","callback"]},"covered":{"key_type":"int","val_type":"const_char_ptr","process_style":"printf"},"notes":"unsigned_int × double × callback は _06 で対応予定","total_combos":18},"struct_bitfield_flags_04":{"category":"struct_union","subcategory":"bitfield_flags","axes":{"base_type":["unsigned_int","uint8_t","uint16_t","uint32_t"],"flag_count":["3","4","8"]},"covered":{"base_type":"unsigned_int","flag_count":"3"},"notes":"4フラグ / 8フラグ版は _05 以降で対応予定","total_combos":12},"struct_constructor_01":{"category":"struct_union","subcategory":"struct_constructor","axes":{"field_type_combo":["double_double","int_int","uint_uint","int_double"],"ctor_style":["value_return","ptr_out"]},"covered":{"field_type_combo":"double_double","ctor_style":"value_return"},"notes":"ptr_out スタイルは _02 で対応予定","total_combos":8},"struct_linked_list_02":{"category":"struct_union","subcategory":"linked_list_node","axes":{"data_type":["int","double","char*","void*"],"list_operation":["push_front","push_back","remove"]},"covered":{"data_type":"int","list_operation":"push_front"},"notes":"push_back / remove は _03 / _04 で対応予定","total_combos":12},"struct_union_type_pun_03":{"category":"struct_union","subcategory":"union_type_pun","axes":{"num_type":["float","double","uint32_t","uint64_t"],"byte_type":["unsigned_char","uint8_t"]},"covered":{"num_type":"float","byte_type":"unsigned_char"},"notes":"uint64_t × uint8_t は _04 で対応予定","total_combos":8}};
+
+const CATS = {
+  loop:             "ループ",
+  array_pointer:    "配列・ポインタ",
+  string_ops:       "文字列操作",
+  struct_union:     "構造体・共用体",
+  recursive_bitops: "再帰・ビット演算",
+};
+const COLORS = {
+  loop:             { bg:"#EEEDFE", b:"#534AB7", t:"#3C3489" },
+  array_pointer:    { bg:"#E1F5EE", b:"#0F6E56", t:"#085041" },
+  string_ops:       { bg:"#FAECE7", b:"#993C1D", t:"#712B13" },
+  struct_union:     { bg:"#FAEEDA", b:"#854F0B", t:"#633806" },
+  recursive_bitops: { bg:"#FBEAF0", b:"#993556", t:"#72243E" },
+};
+
+// ─── アプリ状態 ───────────────────────────────
+let selCat  = "all";
+let search  = "";
+let fixIdxMap = {};   // { [tid]: number }
+
+// ─── ユーティリティ ────────────────────────────
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    Object.entries(attrs).forEach(([k, v]) => {
+      if (k === "style" && typeof v === "object") {
+        Object.assign(e.style, v);
+      } else if (k.startsWith("on") && typeof v === "function") {
+        e.addEventListener(k.slice(2).toLowerCase(), v);
+      } else if (k === "className") {
+        e.className = v;
+      } else {
+        e.setAttribute(k, v);
+      }
+    });
+  }
+  children.flat().forEach(c => {
+    if (c == null) return;
+    e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  });
+  return e;
+}
+
+function isCovered(covered, rowK, rowV, colK, colV, fixK, fixV) {
+  if (fixK) return covered[rowK] === rowV && covered[colK] === colV && covered[fixK] === fixV;
+  return covered[rowK] === rowV && covered[colK] === colV;
+}
+
+// ─── サマリー集計 ─────────────────────────────
+function totalStats() {
+  let tc = 0, tmpl = 0;
+  Object.values(RAW).forEach(d => { tc += d.total_combos; tmpl++; });
+  return { tc, tmpl, covered: tmpl };
+}
+
+function catStats() {
+  const s = {};
+  Object.keys(CATS).forEach(c => {
+    const entries = Object.values(RAW).filter(d => d.category === c);
+    s[c] = {
+      tmpl: entries.length,
+      tc:   entries.reduce((a, d) => a + d.total_combos, 0),
+      covered: entries.length,
+    };
+  });
+  return s;
+}
+
+// ─── マトリクスカード生成 ─────────────────────
+function buildMatrix(tid, d) {
+  const { axes, covered, notes, total_combos } = d;
+  const ks   = Object.keys(axes);
+  const is3  = ks.length >= 3;
+  const fixK = is3 ? ks[0] : null;
+  const rowK = is3 ? ks[1] : ks[0];
+  const colK = is3 ? ks[2] : ks[1];
+  const rowV = axes[rowK] || [];
+  const colV = axes[colK] || [];
+  const fixVs = is3 ? (axes[fixK] || []) : [];
+  if (!(tid in fixIdxMap)) fixIdxMap[tid] = 0;
+  const c   = COLORS[d.category] || COLORS.loop;
+  const pct = Math.round((1 / total_combos) * 100);
+
+  // カード全体
+  const card = el("div", { className: "matrix-card",
+    style: { border: `1px solid ${c.b}` } });
+
+  // ── ヘッダ ──
+  const header = el("div", { className: "matrix-header",
+    style: { background: c.bg, borderBottom: `1px solid ${c.b}` } },
+    el("div", null,
+      el("span", { className: "tid",  style: { color: c.t } }, tid),
+      el("span", { className: "sub",  style: { color: c.t } }, d.subcategory),
+    ),
+    el("div", { className: "right" },
+      el("span", { className: "combo-count", style: { color: c.t } }, `1/${total_combos}通り`),
+      el("div", { className: "progress-track", style: { background: c.b + "25" } },
+        el("div", { className: "progress-fill",
+          style: { width: pct + "%", background: c.b } }),
+      ),
+      el("span", { className: "pct-label", style: { color: c.t } }, pct + "%"),
+    ),
+  );
+  card.appendChild(header);
+
+  // ── 固定軸セレクタ（3軸のみ） ──
+  let fixBar = null;
+  if (is3) {
+    fixBar = el("div", { className: "fix-bar",
+      style: { background: c.bg, borderBottom: `1px solid ${c.b}30` } },
+      el("span", { className: "fix-label", style: { color: c.t } }, fixK + ":"),
+    );
+    fixVs.forEach((v, i) => {
+      const btn = el("button", {
+        className: "fix-btn",
+        style: {
+          background: i === fixIdxMap[tid] ? c.b : c.b + "22",
+          color:      i === fixIdxMap[tid] ? "#fff" : c.t,
+          fontWeight: i === fixIdxMap[tid] ? "500" : "400",
+        },
+        onclick: () => { fixIdxMap[tid] = i; render(); },
+      }, v);
+      fixBar.appendChild(btn);
+    });
+    card.appendChild(fixBar);
+  }
+
+  // ── テーブル ──
+  const fixV  = is3 ? fixVs[fixIdxMap[tid]] : null;
+  const wrap  = el("div", { className: "matrix-table-wrap" });
+  const table = el("table", { className: "matrix-table" });
+
+  // thead
+  const thead = el("thead");
+  const hrow  = el("tr");
+  hrow.appendChild(el("th", {
+    className: "row-axis",
+    style: { borderBottom: `1px solid ${c.b}30` },
+  }, `${rowK} ↓ / ${colK} →`));
+  colV.forEach(cv => {
+    hrow.appendChild(el("th", {
+      style: { textAlign: "center", borderBottom: `1px solid ${c.b}30` },
+    }, cv));
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  // tbody
+  const tbody = el("tbody");
+  rowV.forEach((rv, ri) => {
+    const tr = el("tr", {
+      style: { background: ri % 2 ? c.bg + "50" : "transparent" },
+    });
+    tr.appendChild(el("td", {
+      className: "row-label",
+      style: { borderRight: `1px solid ${c.b}20` },
+    }, rv));
+    colV.forEach(cv => {
+      const hit  = isCovered(covered, rowK, rv, colK, cv, fixK, fixV);
+      const cell = el("span", {
+        className: hit ? "cell-covered" : "cell-empty",
+        style: hit
+          ? { background: c.b }
+          : { border: `1.5px dashed ${c.b}50`, color: c.b + "90" },
+      }, hit ? "✓" : "○");
+      tr.appendChild(el("td", null, cell));
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  card.appendChild(wrap);
+
+  // ── notes ──
+  if (notes) {
+    card.appendChild(el("div", {
+      className: "matrix-notes",
+      style: { borderTop: `1px solid ${c.b}20` },
+    }, notes));
+  }
+
+  return card;
+}
+
+// ─── メイン描画 ───────────────────────────────
+function render() {
+  const app  = document.getElementById("app");
+  app.innerHTML = "";
+
+  const { tc, tmpl, covered } = totalStats();
+  const cs = catStats();
+  const cats = Object.keys(CATS);
+
+  // サマリーカード
+  const summaryGrid = el("div", { className: "summary-grid" });
+  [
+    { label: "テンプレート数",   value: tmpl,           warn: false },
+    { label: "組み合わせ総数",   value: tc,             warn: false },
+    { label: "カバー済み",       value: covered,        warn: false },
+    { label: "未カバー",         value: tc - covered,   warn: true  },
+  ].forEach(({ label, value, warn }) => {
+    summaryGrid.appendChild(el("div", { className: "summary-card" + (warn ? " warn" : "") },
+      el("div", { className: "label" }, label),
+      el("div", { className: "value" }, String(value)),
+    ));
+  });
+  app.appendChild(summaryGrid);
+
+  // カテゴリ別バー
+  const catBars = el("div", { className: "cat-bars" });
+  catBars.appendChild(el("div", { className: "section-label" },
+    "カテゴリ別 組み合わせカバー率"));
+  cats.forEach(c => {
+    const s   = cs[c];
+    const p   = Math.round((s.covered / s.tc) * 100);
+    const col = COLORS[c];
+    const row = el("div", { className: "cat-bar-row" });
+    row.appendChild(el("div", { className: "cat-name", style: { color: col.t } }, CATS[c]));
+    row.appendChild(el("div", { className: "cat-bar-track", style: { background: col.b + "22" } },
+      el("div", { className: "cat-bar-fill",
+        style: { width: p + "%", background: col.b } }),
+    ));
+    row.appendChild(el("div", { className: "cat-stat" },
+      `${s.covered}/${s.tc} (${p}%) · ${s.tmpl}tmpl`));
+    catBars.appendChild(row);
+  });
+  app.appendChild(catBars);
+
+  // フィルターバー
+  const filterBar = el("div", { className: "filter-bar" });
+
+  // "すべて" ボタン
+  const allBtn = el("button", {
+    style: {
+      background:  selCat === "all" ? "#1a1a18" : "#fff",
+      color:       selCat === "all" ? "#fff"    : "#5f5e5a",
+      border:      "1px solid #b4b2a9",
+      fontWeight:  selCat === "all" ? "500" : "400",
+    },
+    onclick: () => { selCat = "all"; render(); },
+  }, "すべて");
+  filterBar.appendChild(allBtn);
+
+  // カテゴリボタン
+  cats.forEach(c => {
+    const col    = COLORS[c];
+    const active = selCat === c;
+    filterBar.appendChild(el("button", {
+      style: {
+        background: active ? col.b : col.bg,
+        color:      active ? "#fff" : col.t,
+        border:     `1px solid ${col.b}`,
+        fontWeight: active ? "500" : "400",
+      },
+      onclick: () => { selCat = c; render(); },
+    }, CATS[c]));
+  });
+
+  // 検索ボックス
+  const searchBox = el("input", {
+    type: "text", placeholder: "ID で絞り込み...", value: search,
+    oninput: (e) => { search = e.target.value; render(); },
+  });
+  filterBar.appendChild(searchBox);
+  app.appendChild(filterBar);
+
+  // フィルタリング
+  const filtered = Object.entries(RAW).filter(([tid, d]) => {
+    if (selCat !== "all" && d.category !== selCat) return false;
+    if (search && !tid.includes(search) && !d.subcategory.includes(search)) return false;
+    return true;
+  });
+
+  app.appendChild(el("div", { className: "count-label" },
+    `${filtered.length} テンプレートを表示中`));
+
+  // マトリクス一覧
+  filtered.forEach(([tid, d]) => {
+    app.appendChild(buildMatrix(tid, d));
+  });
+}
+
+render();
+</script>
+</body>
+</html>
